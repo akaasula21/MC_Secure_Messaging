@@ -1,7 +1,6 @@
 import os
 import socket
-from pyascon.ascon import ascon_encrypt, ascon_decrypt, get_random_bytes
-
+from pyascon.ascon import ascon_encrypt, ascon_decrypt
 
 # Generate random keys for User B to User A
 key_a_to_b = os.environ.get('A_KEY')  # 16 bytes for Ascon-128
@@ -11,6 +10,7 @@ associated_data = b'CS645/745 Modern Cryptography: Secure Messaging'
 
 
 def decrypt_message_from_a(ciphertexts):
+    print("Encrypted message from User A: ", ciphertexts)
     return ascon_decrypt(key_a_to_b.encode(), nonce, associated_data, ciphertexts, "Ascon-128")
 
 
@@ -27,25 +27,43 @@ port = 12345
 # Connect to UserA
 s.connect(('127.0.0.1', port))
 
-while True:
-    # Get input from UserB
-    plaintext_message = input("UserB, enter your message: ")
+try:
+    while True:
+        # Get input from UserB
+        plaintext_message = input("UserB, enter your message: ")
 
-    # Encrypt the input message
-    encrypted_message = encrypt_message_to_a(plaintext_message.encode())
+        if plaintext_message.lower() == 'exit':
+            # If UserB enters 'exit', close the connection
+            s.sendall(len(plaintext_message).to_bytes(4, 'big'))
+            s.sendall(plaintext_message.encode())
+            print('Connection closed by UserB.')
+            break
 
-    # Send the length of the encrypted message
-    s.sendall(len(encrypted_message).to_bytes(4, 'big'))
+        # Encrypt the input message
+        encrypted_message = encrypt_message_to_a(plaintext_message.encode())
 
-    # Send the encrypted message to UserA
-    s.sendall(encrypted_message)
+        # Send the length of the encrypted message
+        s.sendall(len(encrypted_message).to_bytes(4, 'big'))
 
-    # Receive the length of the ciphertext
-    ciphertext_length = int.from_bytes(s.recv(4), 'big')
+        # Send the encrypted message to UserA
+        s.sendall(encrypted_message)
 
-    # Receive ciphertext from UserA
-    ciphertext = s.recv(ciphertext_length)
+        # Receive the length of the ciphertext
+        ciphertext_length = int.from_bytes(s.recv(4), 'big')
 
-    # Decrypt the received ciphertext
-    decrypted_message = decrypt_message_from_a(ciphertext)
-    print('Decrypted Message from UserA:', decrypted_message.decode())
+        # Receive ciphertext from UserA
+        ciphertext = s.recv(ciphertext_length)
+
+        if ciphertext == b'exit':
+            print('Connection closed by User A.')
+            break
+
+        # Decrypt the received ciphertext
+        decrypted_message = decrypt_message_from_a(ciphertext)
+        print('Decrypted Message from UserA:', decrypted_message.decode())
+
+except KeyboardInterrupt:
+    print('Client terminated by UserB.')
+
+finally:
+    s.close()
