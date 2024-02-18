@@ -89,6 +89,7 @@ In the UserB terminal, run:
 ## 3. Project Structure
 Here is the project structure for reference:
 
+```bash
 .
 ├── pyascon
 │   ├── LICENSE
@@ -106,6 +107,7 @@ Here is the project structure for reference:
     └── pyvenv.cfg
 
 6 directories, 9 files
+```
 
 
 
