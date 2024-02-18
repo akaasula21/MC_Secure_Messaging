@@ -105,6 +105,9 @@ Here is the project structure for reference:
     ├── lib
     └── pyvenv.cfg
 
+6 directories, 9 files
+
+
 
 ## 4. Design and Implementation
 
